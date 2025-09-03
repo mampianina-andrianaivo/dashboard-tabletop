@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard Light</title>
+<style>
+/* --- RESET & BASE --- */
+* {
+  box-sizing: border-box;
+}
+body, html {
+  margin: 0; padding: 0;
+  height: 100vh; width: 100vw;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f7fa;
+  color: #2c3e50;
+  overflow: hidden;
+}
+#container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  justify-content: center;
+  align-items: center;
+}
+#palette {
+  width: 180px;
+  padding: 10px;
+  overflow-y: auto;
+  background-color: #e1e8f0;
+  border-radius: 6px;
+  box-shadow: 0 0 6px rgba(0,0,0,0.1);
+}
+#palette h2 {
+  margin-top: 0;
+  color: #2980b9;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+}
+.widget-item {
+  background: #d6e0f0;
+  padding: 10px;
+  margin-bottom: 10px;
+  cursor: grab;
+  user-select: none;
+  text-align: center;
+  font-weight: bold;
+  color: #2980b9;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(41, 128, 185, 0.3);
+}
+.widget-item:active {
+  cursor: grabbing;
+}
+
+/* --- DASHBOARD & GRID --- */
+#dashboard {
+  flex-grow: 1;
+  padding: 10px;
+  background-color: #f0f4fa;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  overflow: hidden;
+}
+#grid {
+  display: grid;
+  grid-template-columns: repeat(14, 100px);
+  grid-template-rows: repeat(8, 100px);
+  gap: 8px;
+  background: #dce4f7;
+  padding: 10px;
+  width: max-content;
+  height: max-content;
+  position: relative;
+}
+.grid-cell {
+  background: #e7ecf9;
+  border: 2px dashed #a3b1d4;
+  width: 100px;
+  height: 100px;
+  position: relative;
+}
+
+/* --- WIDGETS GENERIQUES --- */
+.widget {
+  background: #c1c8e4;
+  color: #2c3e50;
+  font-size: 0.9rem;
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  cursor: grab;
+  border-radius: 4px;
+  box-shadow: 0 0 6px rgba(41, 128, 185, 0.25);
+}
+
+/* --- DIMENSIONS DES WIDGETS --- */
+.widget.text1x1,
+.widget.stats,
+.widget.image,
+.widget.dice,
+.widget.toggle,
+.widget.turn-counter {
+  width: 100px;
+  height: 100px;
+}
+.widget.text1x2 {
+  width: 208px;
+  height: 100px;
+}
+.widget.image.image-2x2 {
+  width: 208px;
+  height: 208px;
+}
+.widget.image-large {
+  width: 508px;
+  height: 408px;
+}
+
+/* --- HEADER WIDGET --- */
+.widget > div:first-child {
+  height: 24px;
+  background: #a3b1d4;
+  display: flex;
+  align-items: center;
+  padding-left: 28px;
+  flex-shrink: 0;
+  position: relative;
+  border-radius: 4px 4px 0 0;
+  color: #1c3a63;
+  font-weight: 600;
+}
+
+/* --- ZONE DE CONTENU --- */
+.widget > div:nth-child(2) {
+  flex-grow: 1;
+  padding: 4px;
+  overflow: hidden;
+  height: calc(100% - 24px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* --- BOUTON SUPPRIMER (X) --- */
+.widget .remove-btn {
+  all: unset;
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  font-size: 12px;
+  font-weight: bold;
+  background: rgba(231, 76, 60, 0.15);
+  color: #c0392b;
+  line-height: 14px;
+  text-align: center;
+  cursor: pointer;
+  opacity: 0;
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 10;
+  transition: background 0.3s, opacity 0.3s;
+  pointer-events: none;
+  border-radius: 3px;
+}
+.widget > div:first-child:hover .remove-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+.widget .remove-btn:hover {
+  background: rgba(231, 76, 60, 0.4);
+}
+
+/* --- TEXTAREA --- */
+.widget textarea {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  color: #2c3e50;
+  border: none;
+  resize: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 0.9rem;
+  overflow: hidden;
+}
+
+/* --- STATS --- */
+.widget.stats > div:nth-child(2) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 4px;
+}
+.widget.stats input.stat-name {
+  width: 80%;
+  background: #b0bedf;
+  border: none;
+  color: #2c3e50;
+  text-align: center;
+  font-size: 0.85rem;
+  padding: 2px 4px;
+  outline: none;
+  border-radius: 3px;
+}
+.widget.stats input.stat-name::placeholder {
+  color: #6c7a99;
+}
+.widget.stats .buttons {
+  display: flex;
+  justify-content: space-around;
+  width: 80%;
+  margin-bottom: 4px;
+}
+.widget.stats .buttons button {
+  background: #7f8fc9;
+  border: none;
+  color: white;
+  width: 24px;
+  height: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.widget.stats .stat-value {
+  width: 36px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1rem;
+  user-select: none;
+  color: #34495e;
+  line-height: 24px;
+  font-family: monospace;
+}
+.widget.stats .gauge {
+  background: #a3b1d4;
+  height: 12px;
+  width: 80%;
+  position: relative;
+  border-radius: 6px;
+}
+.widget.stats .gauge-fill {
+  background: #2c3e50;
+  height: 100%;
+  width: 0%;
+  border-radius: 6px;
+}
+
+/* --- IMAGE WIDGET --- */
+.widget.image {
+  background-color: #dae1f2;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #2c3e50;
+  border-radius: 4px;
+}
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #8a9bcf;
+  font-style: italic;
+  font-size: 1rem;
+  user-select: none;
+  cursor: pointer;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.widget.image > div:nth-child(2):empty::before,
+.widget.image-large > div:nth-child(2):empty::before {
+  content: "[image]";
+  color: #8a9bcf;
+  font-style: italic;
+  font-size: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  user-select: none;
+}
+.image-placeholder img {
+  max-width: 90%;
+  max-height: calc(100% - 16px);
+  object-fit: contain;
+  display: block;
+  user-select: none;
+  pointer-events: auto;
+  border-radius: 4px;
+}
+
+/* --- OVERLAY IMAGE --- */
+#overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(245, 247, 250, 0.95);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+#overlay.hidden {
+  display: none;
+}
+#overlay-content {
+  position: relative;
+  background: #e1e8f0;
+  padding: 10px;
+  max-width: 80vw;
+  max-height: 80vh;
+  border-radius: 6px;
+  box-shadow: 0 0 12px rgba(41, 128, 185, 0.3);
+}
+#overlay-content img {
+  max-width: 100%;
+  max-height: 70vh;
+  display: block;
+  margin: 0 auto;
+  user-select: none;
+  border-radius: 4px;
+}
+#overlay-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: #e74c3c;
+  border: none;
+  color: white;
+  font-size: 20px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 4px;
+}
+
+/* --- DRAGGING --- */
+body.dragging {
+  cursor: pointer !important;
+}
+
+/* ============================== */
+/* ========== NOUVEAUX ========== */
+/* ============================== */
+
+/* --- Dice Widget --- */
+.widget.dice .dice-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.widget.dice button {
+  background: #7f8fc9;
+  border: none;
+  color: white;
+  padding: 4px 10px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+.widget.dice .dice-result {
+  font-size: 24px;
+  text-align: center;
+  font-weight: 700;
+  user-select: none;
+  color: #34495e;
+}
+
+/* --- Turn Counter Widget --- */
+.widget.turn-counter .turn-btn {
+  background-color: #d6e0f0;
+  color: #2980b9;
+  border: 0px solid #a3b1d4;
+  font-size: 35px;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 4px;
+  width: 100%;
+  height: 100%;
+  transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+.widget.turn-counter .turn-btn:hover {
+  background-color: #b0bedf;
+  color: #1c3a63;
+  border-color: #2980b9;
+    border-radius: 4px;
+}
+
+/* --- Toggle State Widget --- */
+@keyframes textGlowPulse {
+  0%, 100% {
+    text-shadow: 0 0 12px #2980b9;
+  }
+  50% {
+    text-shadow: 0 0 12px transparent;
+  }
+}
+.toggle-state {
+  font-size: 40px;
+  padding: 5px 33px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background-color: #d6e0f0;
+  color: #7f8fc9;
+  transition: all 0.3s ease;
+  display: inline-block;
+  user-select: none;
+  border-radius: 4px;
+}
+.toggle-state.on {
+  background-color: #b0bedf;
+  font-size: 40px;
+  color: #2980b9;
+  text-shadow: 0 0 12px #2980b9;
+  border: 1px solid #2980b9;
+}
+
+.toggle-state.off {
+  background-color: #d6e0f0;
+  border: 1px solid transparent;
+  color: #a3b1d4;
+  animation: none;
+}
+.toggle-state:hover {
+  background-color: #b0bedf;
+  font-size: 35px;
+  color: #2980b9;
+  text-shadow: 0 0 12px #2980b9;
+  border: 1px solid #2980b9;
+}
+
+
+.dice-2x2 {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding-top: 0px;
+  background-color: #a3b1d4;
+  user-select: none;
+  width: fit-content;
+  font-weight: bold;
+  border-radius: 4px;
+}
+
+.dice-2x2 .die {
+  background-color: #d6e0f0;
+  padding-top: 0px;
+  color: #2980b9;
+  border: 1px solid #a3b1d4;
+  font-size: 25px;
+  cursor: pointer;
+  user-select: none;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+  font-weight: bold;
+  border-radius: 4px;
+}
+
+.dice-2x2 .die:hover {
+  background-color: #b0bedf;
+  color: #1c3a63;
+  border-color: #2980b9;
+  font-weight: bold;
+}
+
+</style>
+</head>
+<body>
+  <div id="container">
+    <!-- Palette de widgets -->
+    <div id="palette">
+      <h2><center>Widgets</center></h2>
+      <div class="widget-item" draggable="true" data-type="text1x1">Zone texte 1x1</div>
+      <div class="widget-item" draggable="true" data-type="text1x2">Zone texte 1x2</div>
+      <div class="widget-item" draggable="true" data-type="text2x3">Zone texte 2x3</div>
+      <div class="widget-item" draggable="true" data-type="stats">Zone stats</div>
+      <div class="widget-item" draggable="true" data-type="turn-counter">Tours</div>
+      <div class="widget-item" draggable="true" data-type="toggle">Switch</div>
+      <div class="widget-item" draggable="true" data-type="image1x1">Image 1x1</div>
+      <div class="widget-item" draggable="true" data-type="image2x2">Image 2x2</div>
+      <div class="widget-item" draggable="true" data-type="image4x5">Image 4x5</div>
+      <!-- ✅ Ajout du nouveau widget dés -->
+      <div class="widget-item" draggable="true" data-type="dice-2x2">d6 d8 d10 d12</div>
+      <h6><center>Mampianina | Free to share</center></h6>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard">
+      <div id="grid">
+        <!-- Les cellules de la grille seront générées via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlay image -->
+  <div id="overlay" class="hidden">
+    <div id="overlay-content">
+      <button id="overlay-close">&times;</button>
+      <img src="" alt="Image agrandie" />
+    </div>
+  </div>
+
+  <script>
+    // [1] Initialisation
+const palette = document.getElementById('palette');
+const grid = document.getElementById('grid');
+const overlay = document.getElementById('overlay');
+const overlayImg = overlay.querySelector('img');
+const overlayClose = document.getElementById('overlay-close');
+
+const GRID_ROWS = 8;
+const GRID_COLS = 14;
+const CELL_SIZE = 100;
+const CELL_GAP = 8;
+const GRID_PADDING = 10;
+
+// Générer la grille
+function generateGrid() {
+  for (let r = 0; r < GRID_ROWS; r++) {
+    for (let c = 0; c < GRID_COLS; c++) {
+      const cell = document.createElement('div');
+      cell.classList.add('grid-cell');
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      grid.appendChild(cell);
+    }
+  }
+}
+generateGrid();
+
+let draggedType = null;
+
+// [2] Drag depuis palette
+palette.querySelectorAll('.widget-item').forEach(item => {
+  item.addEventListener('dragstart', e => {
+    draggedType = e.target.dataset.type;
+  });
+});
+
+grid.addEventListener('dragover', e => e.preventDefault());
+
+grid.addEventListener('drop', e => {
+  e.preventDefault();
+  if (!draggedType) return;
+
+  const rect = grid.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  const col = Math.floor(x / (CELL_SIZE + CELL_GAP));
+  const row = Math.floor(y / (CELL_SIZE + CELL_GAP));
+
+  placeWidget(draggedType, row, col);
+  draggedType = null;
+});
+
+// [3] Collision
+function isAreaFree(row, col, widthCells, heightCells, excludeWidget = null) {
+  const widgets = grid.querySelectorAll('.widget');
+  for (const w of widgets) {
+    if (w === excludeWidget) continue;
+    const wRow = parseInt(w.dataset.row);
+    const wCol = parseInt(w.dataset.col);
+    const wWidth = parseInt(w.dataset.widthCells);
+    const wHeight = parseInt(w.dataset.heightCells);
+
+    const noOverlap =
+      (col + widthCells <= wCol) ||
+      (col >= wCol + wWidth) ||
+      (row + heightCells <= wRow) ||
+      (row >= wRow + wHeight);
+
+    if (!noOverlap) return false;
+  }
+  return true;
+}
+
+// [4] Création widget
+function createWidget(type) {
+  const widget = document.createElement('div');
+  widget.classList.add('widget');
+  widget.setAttribute('draggable', 'false');
+
+  const header = document.createElement('div');
+  header.classList.add('widget-header');
+  const removeBtn = document.createElement('button');
+  removeBtn.classList.add('remove-btn');
+  removeBtn.textContent = '-';
+  removeBtn.title = "Supprimer le widget";
+  header.appendChild(removeBtn);
+  widget.appendChild(header);
+
+  const content = document.createElement('div');
+  content.classList.add('widget-content');
+  widget.appendChild(content);
+
+  removeBtn.onclick = () => {
+    widget.remove();
+    saveGridAsText();
+  };
+
+  switch (type) {
+    case 'text1x1':
+    case 'text1x2':
+    case 'text2x3':
+      widget.classList.add(type);
+      content.innerHTML = `<textarea placeholder="Texte..." spellcheck="false"></textarea>`;
+      content.querySelector('textarea').addEventListener('input', saveGridAsText);
+      break;
+
+    case 'stats':
+      widget.classList.add('stats');
+      content.innerHTML = `
+        <input class="stat-name" type="text" placeholder="???" />
+        <div class="buttons">
+          <button class="btn-minus">−</button>
+          <div class="stat-value">00</div>
+          <button class="btn-plus">+</button>
+        </div>
+        <div class="gauge">
+          <div class="gauge-fill"></div>
+        </div>
+      `;
+
+      const btnPlus = content.querySelector('.btn-plus');
+      const btnMinus = content.querySelector('.btn-minus');
+      const statValueDiv = content.querySelector('.stat-value');
+      const gaugeFill = content.querySelector('.gauge-fill');
+      const statNameInput = content.querySelector('.stat-name');
+
+      widget.dataset.statVal = 0;
+
+      function updateStat(value) {
+        value = Math.min(12, Math.max(0, value));
+        widget.dataset.statVal = value;
+        statValueDiv.textContent = value.toString().padStart(2, '0');
+        gaugeFill.style.width = (value / 12) * 100 + '%';
+        saveGridAsText();
+      }
+
+      btnPlus.onclick = () => updateStat(parseInt(widget.dataset.statVal) + 1);
+      btnMinus.onclick = () => updateStat(parseInt(widget.dataset.statVal) - 1);
+      statNameInput.addEventListener('input', saveGridAsText);
+      updateStat(0);
+      break;
+
+    case 'turn-counter':
+      widget.classList.add('turn-counter');
+      content.innerHTML = `<button class="turn-btn">II</button>`;
+      const turnBtn = content.querySelector('.turn-btn');
+      widget.dataset.turnValue = "II";
+
+      function updateTurn() {
+        let currentTurn = widget.dataset.turnValue;
+        if (currentTurn === 'II') currentTurn = "I";
+        else if (currentTurn === "I") currentTurn = '×';
+        else currentTurn = "II";
+        widget.dataset.turnValue = currentTurn;
+        turnBtn.textContent = currentTurn;
+        saveGridAsText();
+      }
+      turnBtn.onclick = updateTurn;
+      break;
+
+    case 'toggle':
+      widget.classList.add('toggle');
+      content.innerHTML = `<button class="toggle-state off">ᛋ</button>`;
+      const toggleState = content.querySelector('.toggle-state');
+      widget.dataset.toggleValue = 'false';
+
+      function updateToggle() {
+        const isOn = widget.dataset.toggleValue === 'true';
+        const newState = !isOn;
+        widget.dataset.toggleValue = newState.toString();
+        toggleState.className = `toggle-state ${newState ? 'on' : 'off'}`;
+        saveGridAsText();
+      }
+      toggleState.onclick = updateToggle;
+      break;
+
+    case 'image1x1':
+    case 'image2x2':
+    case 'image4x5':
+      widget.classList.add('image');
+      if (type === 'image2x2') widget.classList.add('image-2x2');
+      if (type === 'image4x5') widget.classList.add('image-large');
+      content.innerHTML = `<div class="image-placeholder">[image]</div>`;
+      setupImageWidget(widget, content);
+      break;
+
+    // ** Intégration du nouveau widget dice-2x2 **
+    // ** Intégration du nouveau widget dice-2x2 **
+case 'dice-2x2':
+  widget.classList.add('dice-2x2');
+  content.innerHTML = `
+    <div class="dice-grid" style="display:grid; grid-template-columns: repeat(2, 1fr); grid-gap:8px; height:100%; width:100%;">
+      <button class="die" data-die="6">[6]</button>
+      <button class="die" data-die="8">[8]</button>
+      <button class="die" data-die="10">[10]</button>
+      <button class="die" data-die="12">[12]</button>
+    </div>
+  `;
+
+  const diceButtons = content.querySelectorAll('.die');
+  
+  // Stockage individuel des résultats par type de dé dans dataset du widget
+  widget.dataset.diceResults = widget.dataset.diceResults || JSON.stringify({6:null,8:null,10:null,12:null});
+  widget.dataset.rolled = widget.dataset.rolled || 'false';
+
+  function saveDiceState() {
+    saveGridAsText();
+  }
+
+  function resetDiceWidget() {
+    diceButtons.forEach(btn => {
+      btn.textContent = 'd' + btn.dataset.die;
+    });
+    widget.dataset.rolled = 'false';
+    widget.dataset.diceResults = JSON.stringify({6:null,8:null,10:null,12:null});
+    saveDiceState();
+  }
+
+  async function rollDiceWidget() {
+    if (widget.dataset.rolled === 'true') {
+      resetDiceWidget();
+      return;
+    }
+    diceButtons.forEach(btn => btn.textContent = '...');
+    await new Promise(res => setTimeout(res, 1000));
+    const results = JSON.parse(widget.dataset.diceResults); // récupérer l'objet résultats actuel
+    diceButtons.forEach(btn => {
+      const sides = parseInt(btn.dataset.die);
+      const val = Math.floor(Math.random()*sides)+1;
+      results[sides] = val;
+      btn.textContent = val;
+    });
+    widget.dataset.rolled = 'true';
+    widget.dataset.diceResults = JSON.stringify(results);
+    saveDiceState();
+  }
+
+  diceButtons.forEach(btn => {
+  btn.addEventListener('click', async e => {
+    const sides = parseInt(btn.dataset.die);
+    const results = JSON.parse(widget.dataset.diceResults);
+
+    if (widget.dataset.rolled === 'true' && results[sides] != null) {
+      // Reset ce bouton
+      results[sides] = null;
+      btn.textContent = 'd' + sides;
+      btn.style.color = '';  // reset couleur
+
+      // Si tous les dés reset, on passe rolled à false
+      if (Object.values(results).every(v => v === null)) {
+        widget.dataset.rolled = 'false';
+      }
+
+      widget.dataset.diceResults = JSON.stringify(results);
+      saveDiceState();
+      return;
+    }
+
+    // Lancer ce dé
+    btn.textContent = '...';
+    btn.style.color = ''; // reset couleur pendant attente
+    await new Promise(res => setTimeout(res, 500));
+
+    const val = Math.floor(Math.random() * sides) + 1;
+    results[sides] = val;
+    btn.textContent = val;
+    btn.style.color = '#b56e99';  // couleur verte sur le résultat
+
+    widget.dataset.rolled = 'true';
+    widget.dataset.diceResults = JSON.stringify(results);
+    saveDiceState();
+  });
+});
+
+
+  // Au chargement, restaurer l’état des dés individuellement
+  if (widget.dataset.diceResults) {
+    try {
+      const saved = JSON.parse(widget.dataset.diceResults);
+      diceButtons.forEach(btn => {
+  const s = parseInt(btn.dataset.die);
+  if (saved[s] != null) {
+    btn.textContent = saved[s];
+    btn.style.color = '#b56e99';  // en vert si lancé
+  } else {
+    btn.textContent = 'd' + s;
+    btn.style.color = '';
+  }
+});
+
+      widget.dataset.rolled = Object.values(saved).some(v => v !== null) ? 'true' : 'false';
+    } catch {
+      resetDiceWidget();
+    }
+  } else {
+    resetDiceWidget();
+  }
+  break;
+
+
+    default:
+      content.textContent = 'Widget inconnu';
+  }
+
+  return widget;
+}
+
+// [5] Placement
+function placeWidget(type, row, col) {
+  let widthCells, heightCells;
+  switch (type) {
+    case 'text1x1':
+    case 'stats':
+    case 'image1x1':
+    case 'turn-counter':
+    case 'toggle':
+      widthCells = 1; heightCells = 1;
+      break;
+    case 'text1x2':
+      widthCells = 2; heightCells = 1;
+      break;
+    case 'image2x2':
+      widthCells = 2; heightCells = 2;
+      break;
+    case 'image4x5':
+      widthCells = 5; heightCells = 4;
+      break;
+    case 'dice-2x2':
+      widthCells = 2; heightCells = 2;
+      break;
+    case 'text2x3':
+      widthCells = 2; heightCells = 3;
+  break;
+    default:
+      widthCells = 1; heightCells = 1;
+  }
+
+  if (col < 0 || row < 0) return;
+  if (col + widthCells > GRID_COLS || row + heightCells > GRID_ROWS) return;
+  if (!isAreaFree(row, col, widthCells, heightCells)) return;
+
+  const widget = createWidget(type);
+  widget.dataset.row = row;
+  widget.dataset.col = col;
+  widget.dataset.widthCells = widthCells;
+  widget.dataset.heightCells = heightCells;
+
+  const widthPx = CELL_SIZE * widthCells + CELL_GAP * (widthCells - 1);
+  const heightPx = CELL_SIZE * heightCells + CELL_GAP * (heightCells - 1);
+
+  widget.style.position = 'absolute';
+  widget.style.left = (GRID_PADDING + col * (CELL_SIZE + CELL_GAP)) + 'px';
+  widget.style.top = (GRID_PADDING + row * (CELL_SIZE + CELL_GAP)) + 'px';
+  widget.style.width = widthPx + 'px';
+  widget.style.height = heightPx + 'px';
+
+  enableWidgetDrag(widget);
+  grid.appendChild(widget);
+  saveGridAsText();
+}
+
+// [6] Drag interne
+function enableWidgetDrag(widget) {
+  let dragStartX, dragStartY, startLeft, startTop;
+  let dragging = false;
+
+  widget.addEventListener('mousedown', e => {
+    if (e.target.closest('button') || ['TEXTAREA','INPUT'].includes(e.target.tagName)) return;
+    dragging = true;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    startLeft = parseInt(widget.style.left);
+    startTop = parseInt(widget.style.top);
+    widget.style.transition = 'none';
+    e.preventDefault();
+  });
+
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const dx = e.clientX - dragStartX;
+    const dy = e.clientY - dragStartY;
+    widget.style.transform = `translate(${dx}px,${dy}px)`;
+  });
+
+  window.addEventListener('mouseup', e => {
+    if (!dragging) return;
+    dragging = false; widget.style.transition = '';
+    const dx = e.clientX - dragStartX;
+    const dy = e.clientY - dragStartY;
+
+    const leftPx = startLeft + dx;
+    const topPx = startTop + dy;
+
+    const col = Math.round((leftPx - GRID_PADDING)/(CELL_SIZE+CELL_GAP));
+    const row = Math.round((topPx - GRID_PADDING)/(CELL_SIZE+CELL_GAP));
+    moveWidgetTo(widget, row, col);
+    widget.style.transform = '';
+  });
+}
+
+function moveWidgetTo(widget, row, col) {
+  const widthCells = parseInt(widget.dataset.widthCells);
+  const heightCells = parseInt(widget.dataset.heightCells);
+  if (col < 0 || row < 0 || col+widthCells>GRID_COLS||row+heightCells>GRID_ROWS) return;
+  if (!isAreaFree(row,col,widthCells,heightCells,widget)) return;
+  widget.dataset.row = row;
+  widget.dataset.col = col;
+  widget.style.left = (GRID_PADDING + col*(CELL_SIZE+CELL_GAP))+'px';
+  widget.style.top = (GRID_PADDING + row*(CELL_SIZE+CELL_GAP))+'px';
+  saveGridAsText();
+}
+
+// [7] Gestion images (inchangée)
+function setupImageWidget(widget, content) {
+  const placeholder = content.querySelector('.image-placeholder');
+  function setImageData(dataURL) {
+    widget.dataset.imageData = dataURL || '';
+    if (dataURL) {
+      placeholder.innerHTML = `<img src="${dataURL}" alt="Image" style="max-width:100%;max-height:100%;object-fit:contain;display:block;margin:auto;">`;
+      const img = placeholder.querySelector('img');
+      img.addEventListener('click', e => {
+        e.stopPropagation();
+        overlayImg.src = img.src;
+        overlay.classList.remove('hidden');
+      });
+      img.addEventListener('dblclick', () => {
+        setImageData('');
+        saveGridAsText();
+      });
+    } else placeholder.textContent = '[image]';
+  }
+  if (widget.dataset.imageData) setImageData(widget.dataset.imageData);
+  else setImageData('');
+  placeholder.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = e =>{
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = evt=>{
+        setImageData(evt.target.result);
+        saveGridAsText();
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  });
+}
+
+// [8] Sauvegarde
+function saveGridAsText() {
+  const widgets = grid.querySelectorAll('.widget');
+  const lines = [];
+  for (const w of widgets) {
+    const type = w.classList.contains('stats') ? 'stats':
+      w.classList.contains('turn-counter') ? 'turn-counter':
+      w.classList.contains('toggle') ? 'toggle':
+      w.classList.contains('text1x1') ? 'text1x1':
+      w.classList.contains('text1x2') ? 'text1x2':
+      w.classList.contains('text2x3') ? 'text2x3' :
+      w.classList.contains('image-large') ? 'image4x5':
+      w.classList.contains('image-2x2') ? 'image2x2':
+      w.classList.contains('image') ? 'image1x1':
+      w.classList.contains('dice-2x2') ? 'dice-2x2': 'unknown';
+
+    const row = w.dataset.row;
+    const col = w.dataset.col;
+    let line = `${type} ${row} ${col}`;
+
+    if (type.startsWith('text')) {
+      const textarea = w.querySelector('textarea');
+      if (textarea) line += ` text=${encodeURIComponent(textarea.value)}`;
+    } else if (type === 'stats') {
+      const name = encodeURIComponent(w.querySelector('.stat-name').value||'');
+      const val = w.dataset.statVal||0;
+      line += ` statName=${name} statVal=${val}`;
+    } else if (type === 'turn-counter') {
+      const val = w.dataset.turnValue||'II';
+      line += ` turnValue=${val}`;
+    } else if (type === 'toggle') {
+      const val = w.dataset.toggleValue||'false';
+      line += ` toggleValue=${val}`;
+    } else if (type.startsWith('image')) {
+      const dataURL = w.dataset.imageData||'';
+      if (dataURL) line += ` imageData=${encodeURIComponent(dataURL)}`;
+    } else if (type === 'dice-2x2') {
+      const diceData = w.dataset.diceResults||JSON.stringify({6:null,8:null,10:null,12:null});
+      const rolled = w.dataset.rolled||'false';
+      line += ` diceResults=${encodeURIComponent(diceData)} rolled=${rolled}`;
+    }
+
+    lines.push(line);
+  }
+  localStorage.setItem('gridState', lines.join('\n'));
+}
+window.addEventListener('beforeunload', saveGridAsText);
+
+// [9] Chargement
+function loadGridFromText() {
+  const text = localStorage.getItem('gridState');
+  if (!text) return;
+
+  const lines = text.split('\n');
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const parts = line.split(' ');
+    const type = parts[0];
+    const row = parseInt(parts[1]);
+    const col = parseInt(parts[2]);
+
+    const rest = parts.slice(3).join(' ');
+    const contentPairs = {};
+    const regexPairs = /(\S+)=("[^"]*"|\S+)/g;
+    let match;
+    while ((match = regexPairs.exec(rest)) !== null) {
+      contentPairs[match[1]] = decodeURIComponent(match[2].replace(/^"|"$/g,''));
+    }
+
+    const widget = createWidget(type);
+    let widthCells = 1, heightCells = 1;
+    if (type === 'text1x2') { widthCells = 2; heightCells = 1; }
+    else if (type === 'image2x2') { widthCells = 2; heightCells = 2; }
+    else if (type === 'image4x5') { widthCells = 5; heightCells = 4; }
+    else if (type === 'dice-2x2') { widthCells = 2; heightCells = 2; }
+    else if (type === 'text2x3') { widthCells = 2; heightCells = 3; }
+
+
+    widget.dataset.row = row;
+    widget.dataset.col = col;
+    widget.dataset.widthCells = widthCells;
+    widget.dataset.heightCells = heightCells;
+
+    const widthPx = CELL_SIZE * widthCells + CELL_GAP * (widthCells - 1);
+    const heightPx = CELL_SIZE * heightCells + CELL_GAP * (heightCells - 1);
+    widget.style.position = 'absolute';
+    widget.style.left = (GRID_PADDING + col * (CELL_SIZE + CELL_GAP)) + 'px';
+    widget.style.top = (GRID_PADDING + row * (CELL_SIZE + CELL_GAP)) + 'px';
+    widget.style.width = widthPx + 'px';
+    widget.style.height = heightPx + 'px';
+
+    // Restauration des données
+    if (type.startsWith('text')) {
+      const ta = widget.querySelector('textarea');
+      if (ta && contentPairs.text) ta.value = contentPairs.text;
+    } else if (type === 'stats') {
+      const name = contentPairs.statName || '';
+      const val = parseInt(contentPairs.statVal) || 0;
+      const nameInput = widget.querySelector('.stat-name');
+      if (nameInput) nameInput.value = name;
+      widget.dataset.statVal = val;
+      const valDiv = widget.querySelector('.stat-value');
+      const gf = widget.querySelector('.gauge-fill');
+      valDiv.textContent = val.toString().padStart(2,'0');
+      gf.style.width = (val/12)*100 + '%';
+    } else if (type === 'turn-counter') {
+      const tv = contentPairs.turnValue || 'II';
+      widget.dataset.turnValue = tv;
+      const tb = widget.querySelector('.turn-btn');
+      if (tb) tb.textContent = tv;
+    } else if (type === 'toggle') {
+      const tv = contentPairs.toggleValue || 'false';
+      widget.dataset.toggleValue = tv;
+      const ts = widget.querySelector('.toggle-state');
+      ts.className = `toggle-state ${tv==='true'?'on':'off'}`;
+    } else if (type.startsWith('image')) {
+      widget.dataset.imageData = contentPairs.imageData || '';
+      if (type === 'image2x2') widget.classList.add('image-2x2');
+      if (type === 'image4x5') widget.classList.add('image-large');
+      setupImageWidget(widget, widget.querySelector('.widget-content'));
+    } else if (type === 'dice-2x2') {
+      widget.dataset.diceResults = contentPairs.diceResults || JSON.stringify({6:null,8:null,10:null,12:null});
+      widget.dataset.rolled = contentPairs.rolled || 'false';
+      // Restaure l’état des dés
+      const diceBtns = widget.querySelectorAll('.die');
+      try {
+        const saved = JSON.parse(widget.dataset.diceResults);
+        diceButtons.forEach(btn => {
+  const s = parseInt(btn.dataset.die);
+  if (saved[s] != null) {
+    btn.textContent = saved[s];
+    btn.style.color = '#b56e99';  // en vert si lancé
+  } else {
+    btn.textContent = 'd' + s;
+    btn.style.color = '';
+  }
+});
+
+      } catch {
+        diceBtns.forEach(btn => btn.textContent = 'd' + btn.dataset.die);
+        widget.dataset.rolled = 'false';
+      }
+    }
+
+    enableWidgetDrag(widget);
+    grid.appendChild(widget);
+  }
+}
+window.addEventListener('load', loadGridFromText);
+
+// [10] Overlay fermeture
+overlayClose.onclick = () => {
+  overlay.classList.add('hidden');
+  overlayImg.src = '';
+};
+
+  </script>
+</body>
+</html>
